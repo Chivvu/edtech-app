@@ -57,12 +57,14 @@ export function Sidebar() {
     <aside className="flex h-screen w-64 flex-col border-r border-border bg-card/60 px-4 py-6 backdrop-blur-md">
       {/* Brand Header */}
       <div className="mb-8 flex items-center gap-3 px-2">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 font-bold text-white shadow-md shadow-indigo-500/20">
-          EF
+        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-purple-500/30 bg-black/60 shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-transform duration-300 hover:scale-105">
+          <img src="/logo.jpg" alt="EduFlow AI Logo" className="h-full w-full object-cover" />
         </div>
         <div>
-          <h1 className="text-sm font-bold tracking-tight text-foreground">EduFlow AI</h1>
-          <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Internal Intelligence</p>
+          <h1 className="text-sm font-bold tracking-tight text-foreground flex items-center gap-1">
+            EduFlow <span className="bg-gradient-to-r from-cyan-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">AI</span>
+          </h1>
+          <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Course Intelligence</p>
         </div>
       </div>
 

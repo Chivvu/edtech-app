@@ -172,8 +172,8 @@ export function GeminiAssistantDrawer() {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3.5 border-b border-border/50 bg-gradient-to-r from-blue-950/90 via-indigo-950/90 to-purple-950/90 backdrop-blur-xl">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-lg shadow-blue-500/30">
-                <Sparkles className="h-4.5 w-4.5" />
+              <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-cyan-500/40 bg-black/60 shadow-lg shadow-cyan-500/20">
+                <img src="/logo.jpg" alt="EduFlow AI Logo" className="h-full w-full object-cover" />
               </div>
               <div>
                 <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">

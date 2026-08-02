@@ -44,8 +44,8 @@ export function Navbar({ onOpenCommandPalette }: NavbarProps) {
         <NotificationCenter />
 
         <div className="flex items-center gap-2 border-l border-border pl-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 font-bold text-white text-xs shadow-md">
-            EF
+          <div className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-purple-500/40 bg-black/60 shadow-md shadow-purple-500/20">
+            <img src="/logo.jpg" alt="Shivam Kumar Logo" className="h-full w-full object-cover" />
           </div>
           <div className="hidden sm:flex flex-col text-left">
             <span className="text-xs font-semibold text-foreground">Shivam Kumar</span>
