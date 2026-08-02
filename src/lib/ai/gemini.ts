@@ -3,14 +3,37 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 // Read API key securely from environment variable
 const getApiKey = () => process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
 
-export const getGeminiModel = (modelName = "gemini-2.0-flash") => {
+export const getGenAIInstance = () => {
+  const apiKey = getApiKey();
+  if (!apiKey) return null;
+  return new GoogleGenerativeAI(apiKey);
+};
+
+export async function generateGeminiContent(prompt: string): Promise<string> {
   const apiKey = getApiKey();
   if (!apiKey) {
-    throw new Error("GEMINI_API_KEY environment variable is not configured.");
+    throw new Error("GEMINI_API_KEY is missing");
   }
+
   const genAI = new GoogleGenerativeAI(apiKey);
-  return genAI.getGenerativeModel({ model: modelName });
-};
+  const modelsToTry = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-flash-latest"];
+
+  let lastError: any = null;
+
+  for (const modelName of modelsToTry) {
+    try {
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const result = await model.generateContent(prompt);
+      const responseText = result.response.text();
+      if (responseText) return responseText;
+    } catch (err: any) {
+      console.warn(`Gemini model ${modelName} failed, trying next model:`, err?.message || err);
+      lastError = err;
+    }
+  }
+
+  throw lastError || new Error("Failed to generate content with Gemini API");
+}
 
 // Interface Definitions
 export interface GeminiAuditResult {
@@ -79,14 +102,6 @@ export interface GeminiCurriculumAnalysis {
   overallCurriculumHealth: number;
 }
 
-export interface GeminiExecutiveReport {
-  executiveSummary: string;
-  qualityTrend: "IMPROVING" | "STABLE" | "DECLINING";
-  lowQualityCourses: { id: string; title: string; score: number; mainIssue: string }[];
-  topPerformers: string[];
-  actionableRecommendations: string[];
-}
-
 // 1. AI Course Review
 export async function generateCourseAuditWithGemini(courseData: {
   title: string;
@@ -121,7 +136,6 @@ export async function generateCourseAuditWithGemini(courseData: {
   if (!getApiKey()) return fallbackResult;
 
   try {
-    const model = getGeminiModel();
     const prompt = `Analyze the following educational course structure for pedagogical quality, Bloom's Taxonomy distribution, difficulty, readability, and accessibility. Return valid JSON matching the schema:
 Title: ${courseData.title}
 Description: ${courseData.description}
@@ -139,8 +153,7 @@ JSON Output format:
   "summary": "string"
 }`;
 
-    const response = await model.generateContent(prompt);
-    const text = response.response.text();
+    const text = await generateGeminiContent(prompt);
     const cleanJson = text.replace(/```json\n?|\n?```/g, "").trim();
     const parsed = JSON.parse(cleanJson);
 
@@ -165,7 +178,6 @@ export async function reviewLessonWithGemini(lessonTitle: string, content: strin
   if (!getApiKey()) return fallback;
 
   try {
-    const model = getGeminiModel();
     const prompt = `Review and enhance the following educational lesson content. Rewrite it professionally, explain key concepts, and generate 1-2 code examples and hands-on exercises. Return valid JSON:
 Title: ${lessonTitle}
 Content: ${content}
@@ -178,8 +190,7 @@ JSON Format:
   "suggestedExercises": ["string"]
 }`;
 
-    const response = await model.generateContent(prompt);
-    const text = response.response.text();
+    const text = await generateGeminiContent(prompt);
     const cleanJson = text.replace(/```json\n?|\n?```/g, "").trim();
     return JSON.parse(cleanJson);
   } catch (error) {
@@ -210,7 +221,6 @@ export async function generateQuizWithGemini(topic: string, count = 3): Promise<
   if (!getApiKey()) return fallback;
 
   try {
-    const model = getGeminiModel();
     const prompt = `Generate ${count} high-quality assessment quiz questions (MCQs, short answer, coding) on topic "${topic}". Return valid JSON array:
 [
   {
@@ -224,8 +234,7 @@ export async function generateQuizWithGemini(topic: string, count = 3): Promise<
   }
 ]`;
 
-    const response = await model.generateContent(prompt);
-    const text = response.response.text();
+    const text = await generateGeminiContent(prompt);
     const cleanJson = text.replace(/```json\n?|\n?```/g, "").trim();
     return JSON.parse(cleanJson);
   } catch (error) {
@@ -247,7 +256,6 @@ export async function detectDuplicatesWithGemini(contentA: string, contentB: str
   if (!getApiKey()) return fallback;
 
   try {
-    const model = getGeminiModel();
     const prompt = `Perform semantic duplicate detection between Content A and Content B. Return JSON:
 Content A: ${contentA}
 Content B: ${contentB}
@@ -261,8 +269,7 @@ JSON Schema:
   "recommendation": "MERGE" | "ARCHIVE" | "KEEP_BOTH"
 }`;
 
-    const response = await model.generateContent(prompt);
-    const text = response.response.text();
+    const text = await generateGeminiContent(prompt);
     const cleanJson = text.replace(/```json\n?|\n?```/g, "").trim();
     return JSON.parse(cleanJson);
   } catch (error) {
@@ -284,7 +291,6 @@ export async function analyzeCurriculumWithGemini(curriculumOverview: string): P
   if (!getApiKey()) return fallback;
 
   try {
-    const model = getGeminiModel();
     const prompt = `Analyze this curriculum structure for missing prerequisites, weak learning flow, and outdated tech. Return JSON:
 ${curriculumOverview}
 
@@ -297,8 +303,7 @@ JSON Schema:
   "overallCurriculumHealth": number
 }`;
 
-    const response = await model.generateContent(prompt);
-    const text = response.response.text();
+    const text = await generateGeminiContent(prompt);
     const cleanJson = text.replace(/```json\n?|\n?```/g, "").trim();
     return JSON.parse(cleanJson);
   } catch (error) {
@@ -321,10 +326,8 @@ Regarding your query: "${userPrompt}" (Active context: ${contextPath || "Dashboa
   if (!getApiKey()) return defaultReply;
 
   try {
-    const model = getGeminiModel();
     const systemPrompt = `You are EduFlow Gemini AI Copilot, an elite Curriculum Architect & AI Pedagogical Auditor. Active user context page: ${contextPath || "/dashboard"}. Provide crisp, highly professional advice formatted in clean Markdown.`;
-    const response = await model.generateContent(`${systemPrompt}\n\nUser Question: ${userPrompt}`);
-    return response.response.text();
+    return await generateGeminiContent(`${systemPrompt}\n\nUser Question: ${userPrompt}`);
   } catch (error) {
     console.warn("Gemini Chat API fallback triggered:", error);
     return defaultReply;
