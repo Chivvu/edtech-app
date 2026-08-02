@@ -1,0 +1,622 @@
+datasource db {
+  provider   = "postgresql"
+  extensions = [pgvector(map: "vector")]
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum CourseStatus {
+  DRAFT
+  AI_AUDIT_PENDING
+  REVIEW_PENDING
+  REVISION_REQUIRED
+  APPROVED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum AuditSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+enum NotificationType {
+  SYSTEM
+  COURSE_AUDIT_COMPLETE
+  REVIEW_ASSIGNED
+  REVIEW_DECISION
+  COMMENT_ADDED
+  QUALITY_ALERT
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  SINGLE_CHOICE
+  TRUE_FALSE
+  SHORT_ANSWER
+  ESSAY
+}
+
+enum ResourceType {
+  PDF_DOCUMENT
+  VIDEO
+  AUDIO_TRANSCRIPT
+  SLIDE_DECK
+  EXTERNAL_LINK
+  CODE_REPOSITORY
+}
+
+// ==========================================
+// AUTH & MULTI-TENANCY
+// ==========================================
+
+model Organization {
+  id           String        @id @default(uuid())
+  name         String
+  slug         String        @unique
+  logoUrl      String?
+  settings     Json?
+  deletedAt    DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  users        User[]
+  roles        Role[]
+  courses      Course[]
+  categories   Category[]
+  tags         Tag[]
+  qualityRules QualityRule[]
+  activityLogs ActivityLog[]
+  auditLogs    AuditLog[]
+
+  @@index([slug])
+  @@index([deletedAt])
+  @@map("organizations")
+}
+
+model Role {
+  id             String           @id @default(uuid())
+  organizationId String
+  name           String
+  description    String?
+  isSystemRole   Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  users          User[]
+  permissions    RolePermission[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@map("roles")
+}
+
+model Permission {
+  id          String           @id @default(uuid())
+  code        String           @unique
+  name        String
+  category    String
+  description String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  roles       RolePermission[]
+
+  @@index([code])
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String     @id @default(uuid())
+  roleId       String
+  permissionId String
+  createdAt    DateTime   @default(now())
+
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@map("role_permissions")
+}
+
+model User {
+  id                String           @id @default(uuid())
+  organizationId    String
+  roleId            String
+  email             String           @unique
+  emailVerified     DateTime?
+  name              String
+  avatarUrl         String?
+  passwordHash      String?
+  twoFactorEnabled  Boolean          @default(false)
+  twoFactorSecret   String?
+  deletedAt         DateTime?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  organization      Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  role              Role             @relation(fields: [roleId], references: [id])
+  accounts          Account[]
+  sessions          Session[]
+  
+  createdCourses    Course[]         @relation("CourseAuthor")
+  assignedReviews   Review[]         @relation("Reviewer")
+  comments          Comment[]
+  notifications     Notification[]
+  activityLogs      ActivityLog[]
+  auditLogs         AuditLog[]       @relation("AuditActor")
+  createdVersions   Version[]        @relation("VersionCreator")
+  uploadedFiles     Attachment[]     @relation("FileUploader")
+
+  @@index([organizationId])
+  @@index([email])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(uuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model VerificationToken {
+  id         String   @id @default(uuid())
+  identifier String
+  token      String   @unique
+  type       String
+  expires    DateTime
+  createdAt  DateTime @default(now())
+
+  @@unique([identifier, token])
+  @@index([identifier])
+  @@map("verification_tokens")
+}
+
+// ==========================================
+// TAXONOMY & CATEGORIZATION
+// ==========================================
+
+model Category {
+  id             String       @id @default(uuid())
+  organizationId String
+  parentId       String?
+  name           String
+  slug           String
+  description    String?
+  deletedAt      DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  parent         Category?    @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children       Category[]   @relation("CategoryHierarchy")
+  courses        Course[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@index([parentId])
+  @@map("categories")
+}
+
+model Tag {
+  id             String       @id @default(uuid())
+  organizationId String
+  name           String
+  slug           String
+  color          String?      @default("#6366f1")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  courses        CourseTag[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@map("tags")
+}
+
+model CourseTag {
+  id        String   @id @default(uuid())
+  courseId  String
+  tagId     String
+  createdAt DateTime @default(now())
+
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, tagId])
+  @@index([courseId])
+  @@map("course_tags")
+}
+
+// ==========================================
+// CURRICULUM & CONTENT HIERARCHY
+// ==========================================
+
+model Course {
+  id                 String       @id @default(uuid())
+  organizationId     String
+  authorId           String
+  categoryId         String?
+  title              String
+  slug               String
+  description        String?      @db.Text
+  targetAudience     String?
+  thumbnailUrl       String?
+  difficulty         String?      @default("INTERMEDIATE")
+  language           String?      @default("ENGLISH")
+  durationMinutes    Int?         @default(0)
+  objectives         Json?
+  prerequisites      Json?
+  visibility         String?      @default("INTERNAL_ONLY")
+  scheduledPublishAt DateTime?
+  status             CourseStatus @default(DRAFT)
+  version            Int          @default(1)
+  overallScore       Float?
+  deletedAt          DateTime?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  organization       Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  author             User         @relation("CourseAuthor", fields: [authorId], references: [id])
+  category           Category?    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  
+  modules            Module[]
+  tags               CourseTag[]
+  aiReports          AIReport[]
+  reviews            Review[]
+  versions           Version[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId, status])
+  @@index([authorId])
+  @@index([categoryId])
+  @@index([deletedAt])
+  @@map("courses")
+}
+
+model Module {
+  id              String       @id @default(uuid())
+  courseId        String
+  title           String
+  description     String?      @db.Text
+  orderIndex      Int
+  status          CourseStatus @default(DRAFT)
+  durationMinutes Int?         @default(0)
+  objectives      Json?
+  deletedAt       DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  course          Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons         Lesson[]
+
+  @@index([courseId, orderIndex])
+  @@index([deletedAt])
+  @@map("modules")
+}
+
+model Lesson {
+  id                 String           @id @default(uuid())
+  moduleId           String
+  title              String
+  content            String?          @db.Text
+  mediaUrl           String?
+  transcript         String?          @db.Text
+  durationMinutes    Int?             @default(0)
+  status             CourseStatus     @default(DRAFT)
+  orderIndex         Int
+  embedding          Unsupported("vector(1536)")?
+  deletedAt          DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  module             Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  resources          Resource[]
+  assignments        Assignment[]
+  quizzes            Quiz[]
+  comments           Comment[]
+  duplicates         DuplicateMatch[] @relation("SourceLesson")
+  matchedAsDuplicate DuplicateMatch[] @relation("TargetLesson")
+
+  @@index([moduleId, orderIndex])
+  @@index([deletedAt])
+  @@map("lessons")
+}
+
+model DuplicateMatch {
+  id             String   @id @default(uuid())
+  sourceLessonId String
+  targetLessonId String
+  similarity     Float
+  matchedExcerpt String?  @db.Text
+  createdAt      DateTime @default(now())
+
+  sourceLesson   Lesson   @relation("SourceLesson", fields: [sourceLessonId], references: [id], onDelete: Cascade)
+  targetLesson   Lesson   @relation("TargetLesson", fields: [targetLessonId], references: [id], onDelete: Cascade)
+
+  @@index([sourceLessonId])
+  @@map("duplicate_matches")
+}
+
+model Resource {
+  id          String       @id @default(uuid())
+  lessonId    String
+  title       String
+  type        ResourceType
+  fileUrl     String
+  fileSize    Int?
+  deletedAt   DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  lesson      Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([lessonId])
+  @@index([deletedAt])
+  @@map("resources")
+}
+
+model Assignment {
+  id           String    @id @default(uuid())
+  lessonId     String
+  title        String
+  instructions String    @db.Text
+  maxPoints    Int       @default(100)
+  dueDate      DateTime?
+  deletedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  lesson       Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([lessonId])
+  @@index([deletedAt])
+  @@map("assignments")
+}
+
+model Quiz {
+  id               String     @id @default(uuid())
+  lessonId         String
+  title            String
+  description      String?    @db.Text
+  timeLimitMinutes Int?
+  passingScore     Float      @default(70.0)
+  deletedAt        DateTime?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  lesson           Lesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  questions        Question[]
+
+  @@index([lessonId])
+  @@index([deletedAt])
+  @@map("quizzes")
+}
+
+model Question {
+  id           String       @id @default(uuid())
+  quizId       String
+  questionText String       @db.Text
+  questionType QuestionType @default(MULTIPLE_CHOICE)
+  points       Int          @default(1)
+  options      Json
+  explanation  String?      @db.Text
+  orderIndex   Int
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  quiz         Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@index([quizId, orderIndex])
+  @@map("questions")
+}
+
+// ==========================================
+// AI INTELLIGENCE, REVIEWS & FEEDBACK
+// ==========================================
+
+model AIReport {
+  id             String   @id @default(uuid())
+  courseId       String
+  qualityScore   Float
+  clarityScore   Float
+  bloomsCoverage Json
+  pedagogyIssues Json
+  aiSummary      String   @db.Text
+  detailedReport Json?
+  createdAt      DateTime @default(now())
+
+  course         Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+  @@map("ai_reports")
+}
+
+model Review {
+  id         String       @id @default(uuid())
+  courseId   String
+  reviewerId String
+  status     CourseStatus
+  decision   String?
+  feedback   String?      @db.Text
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  course     Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  reviewer   User         @relation("Reviewer", fields: [reviewerId], references: [id])
+  comments   Comment[]
+
+  @@index([courseId])
+  @@index([reviewerId])
+  @@map("reviews")
+}
+
+model Comment {
+  id         String    @id @default(uuid())
+  reviewId   String
+  userId     String
+  lessonId   String?
+  parentId   String?
+  lineNumber Int?
+  comment    String    @db.Text
+  resolved   Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  review     Review    @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [userId], references: [id])
+  lesson     Lesson?   @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  parent     Comment?  @relation("ThreadedComments", fields: [parentId], references: [id], onDelete: Cascade)
+  replies    Comment[] @relation("ThreadedComments")
+
+  @@index([reviewId])
+  @@index([lessonId])
+  @@index([parentId])
+  @@map("comments")
+}
+
+// ==========================================
+// GOVERNANCE, AUDIT, LOGGING & ASSETS
+// ==========================================
+
+model Version {
+  id            String   @id @default(uuid())
+  courseId      String
+  createdById   String
+  versionNumber Int
+  snapshotData  Json
+  changelog     String?  @db.Text
+  createdAt     DateTime @default(now())
+
+  course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdBy     User     @relation("VersionCreator", fields: [createdById], references: [id])
+
+  @@unique([courseId, versionNumber])
+  @@index([courseId])
+  @@map("versions")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String           @db.Text
+  isRead    Boolean          @default(false)
+  readAt    DateTime?
+  linkUrl   String?
+  createdAt DateTime         @default(now())
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+model ActivityLog {
+  id             String       @id @default(uuid())
+  organizationId String
+  userId         String?
+  action         String
+  entityType     String
+  entityId       String
+  metadata       Json?
+  ipAddress      String?
+  createdAt      DateTime     @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+  @@index([entityType, entityId])
+  @@map("activity_logs")
+}
+
+model AuditLog {
+  id             String        @id @default(uuid())
+  actorId        String?
+  organizationId String
+  action         String
+  targetResource String
+  changes        Json?
+  severity       AuditSeverity @default(INFO)
+  createdAt      DateTime      @default(now())
+
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  actor          User?         @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+  @@index([severity])
+  @@map("audit_logs")
+}
+
+model Attachment {
+  id           String   @id @default(uuid())
+  uploadedById String
+  entityType   String
+  entityId     String
+  fileName     String
+  fileUrl      String
+  fileType     String
+  fileSize     Int
+  createdAt    DateTime @default(now())
+
+  uploadedBy   User     @relation("FileUploader", fields: [uploadedById], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([uploadedById])
+  @@map("attachments")
+}
+
+model QualityRule {
+  id              String       @id @default(uuid())
+  organizationId  String
+  ruleName        String
+  description     String?
+  minScore        Float        @default(75.0)
+  maxDuplicatePct Float        @default(15.0)
+  isEnabled       Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("quality_rules")
+}
