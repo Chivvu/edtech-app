@@ -6,6 +6,7 @@ import { DashboardCharts } from "@/features/analytics/components/dashboard-chart
 import { ReviewerWorkloadWidget } from "@/features/analytics/components/reviewer-workload-widget";
 import { InstructorProductivityWidget } from "@/features/analytics/components/instructor-productivity-widget";
 import { RecentActivityWidget } from "@/features/analytics/components/recent-activity-widget";
+import { LivingAIWorkspace } from "@/components/dashboard/living-ai-workspace";
 import { Sparkles, Calendar } from "lucide-react";
 
 export default async function DashboardPage() {
@@ -38,7 +39,10 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* 1. Metric Cards Grid (Total Courses, Pending Reviews, Published Courses, Avg Health Score, AI Reports) */}
+      {/* LIVING AI WORKSPACE: Real-time AI Stream & Today's AI Insights */}
+      <LivingAIWorkspace />
+
+      {/* 1. Metric Cards Grid */}
       <MetricCards
         totalCourses={metrics.totalCourses}
         pendingReviews={metrics.pendingReviews}
@@ -47,14 +51,14 @@ export default async function DashboardPage() {
         aiReportsCount={metrics.aiReportsCount}
       />
 
-      {/* 2. Primary Charts (Monthly Uploads, Approval Rate, Review Turnaround) */}
+      {/* 2. Primary Charts */}
       <DashboardCharts
         monthlyUploads={metrics.monthlyUploads}
         approvalRateTrend={metrics.approvalRateTrend}
         reviewTimeTurnaround={metrics.reviewTimeTurnaround}
       />
 
-      {/* 3. Deep Widgets Grid (Reviewer Workload, Instructor Productivity, Activity Stream) */}
+      {/* 3. Deep Widgets Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <ReviewerWorkloadWidget reviewers={metrics.reviewerWorkload} />
         <InstructorProductivityWidget instructors={metrics.instructorProductivity} />
@@ -63,3 +67,4 @@ export default async function DashboardPage() {
     </div>
   );
 }
+
