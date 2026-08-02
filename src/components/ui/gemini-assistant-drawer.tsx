@@ -147,12 +147,12 @@ export function GeminiAssistantDrawer() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
       {/* Floating Toggle Button */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="group relative flex items-center gap-2.5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-5 py-3.5 text-white shadow-2xl hover:shadow-[0_0_30px_rgba(99,102,241,0.5)] transition-all duration-300 hover:scale-105 active:scale-95"
+          className="group relative flex items-center gap-2.5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-4 sm:px-5 py-3 sm:py-3.5 text-white shadow-2xl hover:shadow-[0_0_30px_rgba(99,102,241,0.5)] transition-all duration-300 hover:scale-105 active:scale-95"
         >
           <div className="relative">
             <Sparkles className="h-5 w-5 text-amber-300" />
@@ -161,14 +161,14 @@ export function GeminiAssistantDrawer() {
               <span className="relative inline-flex rounded-full h-3 w-3 bg-green-400"></span>
             </span>
           </div>
-          <span className="font-semibold text-sm tracking-wide">Gemini AI</span>
+          <span className="font-semibold text-xs sm:text-sm tracking-wide">Gemini AI</span>
           <Zap className="h-3.5 w-3.5 text-yellow-300" />
         </button>
       )}
 
       {/* Expanded Chat Drawer */}
       {isOpen && (
-        <div className="flex flex-col w-[380px] sm:w-[420px] h-[540px] rounded-2xl border border-border/60 bg-card shadow-[0_25px_60px_rgba(0,0,0,0.4)] overflow-hidden" style={{ animation: "slideUp 0.3s ease-out" }}>
+        <div className="flex flex-col w-[calc(100vw-2rem)] sm:w-[420px] h-[80vh] max-h-[540px] rounded-2xl border border-border/60 bg-card shadow-[0_25px_60px_rgba(0,0,0,0.4)] overflow-hidden" style={{ animation: "slideUp 0.3s ease-out" }}>
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3.5 border-b border-border/50 bg-gradient-to-r from-blue-950/90 via-indigo-950/90 to-purple-950/90 backdrop-blur-xl">
             <div className="flex items-center gap-2.5">

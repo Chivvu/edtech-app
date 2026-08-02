@@ -34,24 +34,31 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <ToastProvider>
         <div className="min-h-screen bg-background text-foreground flex">
-          {/* Main Navigation Sidebar */}
-          <Sidebar />
+          {/* Main Navigation Sidebar (Desktop persistent + Mobile drawer) */}
+          <Sidebar
+            isMobileOpen={isMobileSidebarOpen}
+            onMobileClose={() => setIsMobileSidebarOpen(false)}
+          />
 
           {/* Core App Main Content Area */}
           <div className="flex-1 flex flex-col min-w-0 min-h-screen">
-            <Navbar onOpenCommandPalette={() => setIsCommandPaletteOpen(true)} />
+            <Navbar
+              onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+              onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
+            />
 
-            <main className="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto flex flex-col justify-between">
+            <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-7xl w-full mx-auto flex flex-col justify-between overflow-x-hidden">
               <div>{children}</div>
 
-              {/* Attractive Dashboard Footer */}
+              {/* Responsive Dashboard Footer */}
               <footer className="mt-12 pt-6 border-t border-border/50 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 text-center sm:text-left">
                   <span className="font-semibold text-foreground flex items-center gap-1.5">
                     EduFlow AI
                     <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-blue-500/10 to-indigo-500/10 px-2 py-0.5 text-[10px] font-mono text-cyan-400 border border-blue-500/20">
@@ -59,7 +66,7 @@ export default function DashboardLayout({
                       v1.0
                     </span>
                   </span>
-                  <span>•</span>
+                  <span className="hidden sm:inline">•</span>
                   <span className="flex items-center gap-1">
                     Designed with <Heart className="h-3 w-3 text-red-500 fill-red-500 animate-pulse" /> by{" "}
                     <strong className="text-foreground font-medium">Shivam Kumar</strong>

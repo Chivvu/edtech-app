@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Building2,
   ExternalLink,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -41,7 +42,12 @@ interface SidebarItem {
   icon: React.ReactNode;
 }
 
-export function Sidebar() {
+interface SidebarProps {
+  isMobileOpen?: boolean;
+  onMobileClose?: () => void;
+}
+
+export function Sidebar({ isMobileOpen = false, onMobileClose }: SidebarProps) {
   const pathname = usePathname();
 
   const navigation: SidebarItem[] = [
@@ -53,19 +59,31 @@ export function Sidebar() {
     { label: "Settings", href: "/settings", icon: <Settings className="h-4 w-4" /> },
   ];
 
-  return (
-    <aside className="flex h-screen w-64 flex-col border-r border-border bg-card/60 px-4 py-6 backdrop-blur-md">
+  const sidebarContent = (
+    <aside className="flex h-full w-64 flex-col border-r border-border bg-card/95 px-4 py-6 backdrop-blur-md">
       {/* Brand Header */}
-      <div className="mb-8 flex items-center gap-3 px-2">
-        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-purple-500/30 bg-black/60 shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-transform duration-300 hover:scale-105">
-          <img src="/logo.jpg" alt="EduFlow AI Logo" className="h-full w-full object-cover" />
+      <div className="mb-8 flex items-center justify-between px-2">
+        <div className="flex items-center gap-3">
+          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-purple-500/30 bg-black/60 shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-transform duration-300 hover:scale-105">
+            <img src="/logo.jpg" alt="EduFlow AI Logo" className="h-full w-full object-cover" />
+          </div>
+          <div>
+            <h1 className="text-sm font-bold tracking-tight text-foreground flex items-center gap-1">
+              EduFlow <span className="bg-gradient-to-r from-cyan-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">AI</span>
+            </h1>
+            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Course Intelligence</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-sm font-bold tracking-tight text-foreground flex items-center gap-1">
-            EduFlow <span className="bg-gradient-to-r from-cyan-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">AI</span>
-          </h1>
-          <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Course Intelligence</p>
-        </div>
+
+        {/* Mobile Close Button */}
+        {onMobileClose && (
+          <button
+            onClick={onMobileClose}
+            className="md:hidden rounded-lg p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        )}
       </div>
 
       {/* Organization Switcher Pill */}
@@ -75,7 +93,7 @@ export function Sidebar() {
       </div>
 
       {/* Navigation Items */}
-      <nav className="flex-1 space-y-1">
+      <nav className="flex-1 space-y-1 overflow-y-auto">
         {navigation.map((item) => {
           const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
 
@@ -83,8 +101,9 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => onMobileClose?.()}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium transition-all duration-150",
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium transition-all duration-150",
                 isActive
                   ? "bg-primary/10 text-primary font-semibold border-l-2 border-primary"
                   : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
@@ -98,7 +117,7 @@ export function Sidebar() {
       </nav>
 
       {/* Footer Role Status & Social Links */}
-      <div className="border-t border-border/80 pt-4 space-y-3">
+      <div className="border-t border-border/80 pt-4 space-y-3 shrink-0">
         <div className="flex items-center gap-2 px-2 text-xs text-muted-foreground">
           <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0" />
           <div className="truncate">
@@ -135,5 +154,29 @@ export function Sidebar() {
         </div>
       </div>
     </aside>
+  );
+
+  return (
+    <>
+      {/* Desktop Persistent Sidebar */}
+      <div className="hidden md:flex h-screen sticky top-0 shrink-0">
+        {sidebarContent}
+      </div>
+
+      {/* Mobile Drawer Overlay */}
+      {isMobileOpen && (
+        <div className="fixed inset-0 z-50 md:hidden flex">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={onMobileClose}
+          />
+          {/* Drawer Content */}
+          <div className="relative z-10 flex h-full animate-in slide-in-from-left duration-300">
+            {sidebarContent}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
