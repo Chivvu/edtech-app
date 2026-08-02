@@ -1,11 +1,7 @@
-import { OpenAI } from "openai";
+import { openai } from "@/lib/openai";
 import { prisma } from "@/lib/prisma";
 import { AIAuditResultSchema, AIAuditResult } from "../validations/audit.schema";
 import { generateCourseAuditWithGemini } from "@/lib/ai/gemini";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || "demo-key",
-});
 
 export class AIReviewService {
   private static async executeWithRetry<T>(fn: () => Promise<T>, retries = 3, delay = 1000): Promise<T> {
