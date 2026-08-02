@@ -6,7 +6,7 @@ import { ToastProvider } from "@/components/ui/toast";
 import { Sidebar } from "@/components/ui/sidebar";
 import { Navbar } from "@/components/ui/navbar";
 import { CommandPalette } from "@/components/ui/command-palette";
-import { GeminiAssistantDrawer } from "@/components/ui/gemini-assistant-drawer";
+import { CopilotSidePanel } from "@/components/ui/copilot-side-panel";
 import { Heart, Sparkles } from "lucide-react";
 
 function GithubIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -106,8 +106,8 @@ export default function DashboardLayout({
           onClose={() => setIsCommandPaletteOpen(false)}
         />
 
-        {/* Global Google Gemini AI Assistant Floating Drawer */}
-        <GeminiAssistantDrawer />
+        {/* Premium AI Copilot Glass Side Panel (Inspired by GitHub Copilot & Cursor AI) */}
+        <CopilotSidePanel />
       </ToastProvider>
     </ThemeProvider>
   );
