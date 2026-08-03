@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, useTransition } from "react";
-import { getAnalyticsDataAction } from "@/features/analytics/actions/analytics.actions";
+import { getAnalyticsDataAction, generateExecutiveReportAction } from "@/features/analytics/actions/analytics.actions";
 import { AnalyticsReport } from "@/features/analytics/services/analytics.service";
+import { GeminiExecutiveReport } from "@/lib/ai/gemini";
 import { AnalyticsFilterBar } from "@/features/analytics/components/analytics-filter-bar";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -19,7 +20,7 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
-import { BarChart3, TrendingUp, Sparkles, Award, Clock, Users, ShieldCheck, FileSpreadsheet } from "lucide-react";
+import { BarChart3, TrendingUp, Sparkles, Award, Users, ShieldCheck, FileSpreadsheet, RefreshCw, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 
 export default function AnalyticsPage() {
@@ -28,6 +29,10 @@ export default function AnalyticsPage() {
 
   const [timeRange, setTimeRange] = useState("30D");
   const [report, setReport] = useState<AnalyticsReport | null>(null);
+
+  // Gemini AI Executive Report State
+  const [isGeneratingAIReport, setIsGeneratingAIReport] = useState(false);
+  const [execReport, setExecReport] = useState<GeminiExecutiveReport | null>(null);
 
   const fetchAnalytics = () => {
     startTransition(async () => {
@@ -41,6 +46,25 @@ export default function AnalyticsPage() {
   useEffect(() => {
     fetchAnalytics();
   }, [timeRange]);
+
+  const handleGenerateGeminiReport = async () => {
+    setIsGeneratingAIReport(true);
+    toast({ type: "info", title: "Gemini 2.5 Flash Analyzing", description: "Evaluating platform velocity, quality metrics, and SME efficiency..." });
+
+    try {
+      const res = await generateExecutiveReportAction(timeRange);
+      if (res.success && res.data) {
+        setExecReport(res.data);
+        toast({ type: "success", title: "Executive Report Generated", description: "Google Gemini AI analysis ready." });
+      } else {
+        toast({ type: "error", title: "Report Error", description: res.error || "Failed to generate report." });
+      }
+    } catch {
+      toast({ type: "error", title: "Gemini API Error", description: "Could not communicate with Gemini API." });
+    } finally {
+      setIsGeneratingAIReport(false);
+    }
+  };
 
   const handleExportCSV = () => {
     if (!report) return;
@@ -83,7 +107,73 @@ export default function AnalyticsPage() {
             Curriculum volume velocity, SME reviewer turnaround efficiency, AI usage, and quality score distribution.
           </p>
         </div>
+
+        <Button
+          disabled={isGeneratingAIReport}
+          onClick={handleGenerateGeminiReport}
+          className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold text-xs shadow-lg hover:from-purple-500 hover:to-indigo-500"
+        >
+          {isGeneratingAIReport ? (
+            <>
+              <RefreshCw className="h-3.5 w-3.5 mr-1.5 animate-spin" /> Generating AI Report...
+            </>
+          ) : (
+            <>
+              <Sparkles className="h-3.5 w-3.5 mr-1.5 text-amber-300" /> Gemini Executive Report
+            </>
+          )}
+        </Button>
       </div>
+
+      {/* Gemini AI Executive Intelligence Card */}
+      {execReport && (
+        <Card className="border-purple-500/30 bg-purple-500/5 shadow-2xl space-y-4 p-6 rounded-2xl">
+          <div className="flex items-center justify-between border-b border-purple-500/20 pb-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-purple-400" />
+              <h3 className="text-base font-bold text-foreground">Google Gemini 2.5 Flash Executive Intelligence Summary</h3>
+            </div>
+            <span className="rounded-full bg-purple-500/20 px-2.5 py-0.5 text-xs font-mono text-purple-300 border border-purple-500/30">
+              Grounded AI Analysis ({timeRange})
+            </span>
+          </div>
+
+          <p className="text-xs text-foreground leading-relaxed font-medium">
+            {execReport.executiveSummary}
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+            <div className="p-3 rounded-xl border border-white/10 bg-black/40 space-y-1">
+              <span className="text-[10px] uppercase font-bold text-muted-foreground">Upload Velocity</span>
+              <p className="text-xs text-indigo-300">{execReport.uploadVelocityAnalysis}</p>
+            </div>
+
+            <div className="p-3 rounded-xl border border-white/10 bg-black/40 space-y-1">
+              <span className="text-[10px] uppercase font-bold text-muted-foreground">Quality Approval Trend</span>
+              <p className="text-xs text-emerald-300">{execReport.qualityTrendInsight}</p>
+            </div>
+
+            <div className="p-3 rounded-xl border border-white/10 bg-black/40 space-y-1">
+              <span className="text-[10px] uppercase font-bold text-muted-foreground">AI Efficiency Savings</span>
+              <p className="text-xs text-cyan-300">{execReport.aiEfficiencyImpact}</p>
+            </div>
+          </div>
+
+          {execReport.recommendations?.length > 0 && (
+            <div className="pt-2">
+              <span className="text-xs font-bold text-purple-300 uppercase tracking-wider block mb-1">Strategic Recommendations</span>
+              <ul className="space-y-1 text-xs text-muted-foreground">
+                {execReport.recommendations.map((rec, i) => (
+                  <li key={i} className="flex items-center gap-1.5">
+                    <CheckCircle2 className="h-3 w-3 text-emerald-400 shrink-0" />
+                    <span>{rec}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </Card>
+      )}
 
       {/* Filter Bar */}
       <AnalyticsFilterBar
@@ -184,7 +274,7 @@ export default function AnalyticsPage() {
                   <Sparkles className="h-4 w-4 text-purple-400" />
                   <span>AI Engine Usage Metrics</span>
                 </CardTitle>
-                <CardDescription>GPT-4o audit executions & vector embedding queries</CardDescription>
+                <CardDescription>Gemini 2.5 Flash executions & pgvector embedding queries</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between p-3 rounded-lg border border-purple-500/20 bg-purple-500/5">
@@ -199,7 +289,7 @@ export default function AnalyticsPage() {
 
                 <div className="flex items-center justify-between p-3 rounded-lg border border-blue-500/20 bg-blue-500/5">
                   <span className="text-xs text-muted-foreground">Tokens Processed</span>
-                  <span className="text-xl font-extrabold text-blue-400">1.25M</span>
+                  <span className="text-xl font-extrabold text-blue-400">1.85M</span>
                 </div>
               </CardContent>
             </Card>
@@ -239,7 +329,7 @@ export default function AnalyticsPage() {
               <CardHeader className="flex flex-row items-center justify-between space-y-0">
                 <CardTitle className="flex items-center gap-2 text-base">
                   <Users className="h-4 w-4 text-purple-400" />
-                  <span>Designed by Shivam Kumar Productivity</span>
+                  <span>Instructor Productivity</span>
                 </CardTitle>
                 <Button size="sm" variant="ghost" leftIcon={<FileSpreadsheet className="h-3.5 w-3.5" />} onClick={handleExportCSV}>
                   CSV

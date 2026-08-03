@@ -1,7 +1,13 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { updateLessonAction, addResourceAction } from "../actions/lesson.actions";
+import {
+  updateLessonAction,
+  addResourceAction,
+  reviewLessonWithGeminiAction,
+  generateQuizForLessonAction,
+  generateAssignmentForLessonAction,
+} from "../actions/lesson.actions";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -19,8 +25,11 @@ import {
   Plus,
   Paperclip,
   Sparkles,
-  PlayCircle,
+  RefreshCw,
   ExternalLink,
+  HelpCircle,
+  FileCheck,
+  Wand2,
 } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 
@@ -61,6 +70,11 @@ export function LessonEditor({
   const [autosaveStatus, setAutosaveStatus] = useState<"SAVED" | "SAVING" | "UNSAVED">("SAVED");
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
 
+  // AI Loading States
+  const [isReviewingAI, setIsReviewingAI] = useState(false);
+  const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
+  const [isGeneratingAssignment, setIsGeneratingAssignment] = useState(false);
+
   const [isResourceModalOpen, setIsResourceModalOpen] = useState(false);
   const [resTitle, setResTitle] = useState("");
   const [resType, setResType] = useState<ResourceType>(ResourceType.PDF_DOCUMENT);
@@ -93,7 +107,6 @@ export function LessonEditor({
     [lessonId, courseId, title, content, mediaUrl, transcript, duration, status, toast]
   );
 
-  // Debounced Autosave Effect
   useEffect(() => {
     setAutosaveStatus("UNSAVED");
     const timer = setTimeout(() => {
@@ -102,6 +115,78 @@ export function LessonEditor({
 
     return () => clearTimeout(timer);
   }, [content, mediaUrl, transcript, title, handleSave]);
+
+  // Live Gemini AI Lesson Content Review
+  const handleGeminiReview = async () => {
+    setIsReviewingAI(true);
+    toast({ type: "info", title: "Gemini 2.5 Flash Review", description: "Analyzing pedagogical flow and rewriting content..." });
+
+    try {
+      const res = await reviewLessonWithGeminiAction(lessonId, title, content);
+      if (res.success && res.data) {
+        if (res.data.rewrittenContent) {
+          setContent(res.data.rewrittenContent);
+        }
+        toast({
+          type: "success",
+          title: "Gemini AI Review Complete",
+          description: res.data.explanation || "Lesson rewritten with enhanced technical clarity and code examples.",
+        });
+      } else {
+        toast({ type: "error", title: "Review Error", description: res.error || "Failed to complete Gemini review." });
+      }
+    } catch {
+      toast({ type: "error", title: "Gemini Error", description: "Could not reach Gemini API." });
+    } finally {
+      setIsReviewingAI(false);
+    }
+  };
+
+  // Live Gemini Quiz Generator
+  const handleGeminiQuiz = async () => {
+    setIsGeneratingQuiz(true);
+    toast({ type: "info", title: "Generating Gemini Quiz", description: "Creating Bloom's Taxonomy assessment items..." });
+
+    try {
+      const res = await generateQuizForLessonAction(lessonId, title, 3);
+      if (res.success && res.data) {
+        toast({
+          type: "success",
+          title: "Quiz Generated & Saved",
+          description: `Created ${res.data.questions.length} assessment items stored in PostgreSQL!`,
+        });
+      } else {
+        toast({ type: "error", title: "Quiz Error", description: res.error || "Failed to generate quiz." });
+      }
+    } catch {
+      toast({ type: "error", title: "Gemini Error", description: "Could not reach Gemini API." });
+    } finally {
+      setIsGeneratingQuiz(false);
+    }
+  };
+
+  // Live Gemini Assignment Generator
+  const handleGeminiAssignment = async () => {
+    setIsGeneratingAssignment(true);
+    toast({ type: "info", title: "Generating Assignment", description: "Drafting capstone project and grading rubric..." });
+
+    try {
+      const res = await generateAssignmentForLessonAction(lessonId, title);
+      if (res.success && res.data) {
+        toast({
+          type: "success",
+          title: "Assignment Created & Saved",
+          description: `Created "${res.data.details.title}" with 100 max points and rubric stored in PostgreSQL!`,
+        });
+      } else {
+        toast({ type: "error", title: "Assignment Error", description: res.error || "Failed to generate assignment." });
+      }
+    } catch {
+      toast({ type: "error", title: "Gemini Error", description: "Could not reach Gemini API." });
+    } finally {
+      setIsGeneratingAssignment(false);
+    }
+  };
 
   const handleAddResource = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,7 +233,62 @@ export function LessonEditor({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Live Gemini AI Actions Toolbar */}
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={isReviewingAI}
+            onClick={handleGeminiReview}
+            className="border-purple-500/30 text-purple-400 hover:bg-purple-500/10 text-xs"
+          >
+            {isReviewingAI ? (
+              <>
+                <RefreshCw className="h-3.5 w-3.5 mr-1.5 animate-spin" /> Reviewing...
+              </>
+            ) : (
+              <>
+                <Wand2 className="h-3.5 w-3.5 mr-1.5 text-purple-400" /> AI Rewrite & Review
+              </>
+            )}
+          </Button>
+
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={isGeneratingQuiz}
+            onClick={handleGeminiQuiz}
+            className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10 text-xs"
+          >
+            {isGeneratingQuiz ? (
+              <>
+                <RefreshCw className="h-3.5 w-3.5 mr-1.5 animate-spin" /> Generating...
+              </>
+            ) : (
+              <>
+                <HelpCircle className="h-3.5 w-3.5 mr-1.5 text-amber-400" /> AI Quiz
+              </>
+            )}
+          </Button>
+
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={isGeneratingAssignment}
+            onClick={handleGeminiAssignment}
+            className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 text-xs"
+          >
+            {isGeneratingAssignment ? (
+              <>
+                <RefreshCw className="h-3.5 w-3.5 mr-1.5 animate-spin" /> Generating...
+              </>
+            ) : (
+              <>
+                <FileCheck className="h-3.5 w-3.5 mr-1.5 text-cyan-400" /> AI Assignment
+              </>
+            )}
+          </Button>
+
           {/* Mode Switcher */}
           <div className="flex gap-1 rounded-lg border border-border bg-muted/40 p-1 text-xs">
             <button

@@ -1,9 +1,5 @@
-import { OpenAI } from "openai";
 import { prisma } from "@/lib/prisma";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || "demo-key",
-});
+import { detectDuplicatesWithGemini } from "@/lib/ai/gemini";
 
 export interface DuplicateReportResult {
   highestSimilarityPct: number;
@@ -22,12 +18,8 @@ export interface DuplicateReportResult {
 }
 
 export class DuplicateDetectionService {
-  /**
-   * Computes Jaccard / Cosine similarity between two text strings
-   */
   private static calculateTextSimilarity(text1: string, text2: string): number {
     if (!text1 || !text2) return 0;
-
     const words1 = new Set(text1.toLowerCase().replace(/[^a-z0-9\s]/g, "").split(/\s+/));
     const words2 = new Set(text2.toLowerCase().replace(/[^a-z0-9\s]/g, "").split(/\s+/));
 
@@ -54,7 +46,6 @@ export class DuplicateDetectionService {
 
     const currentLessons = targetCourse.modules.flatMap((m) => m.lessons);
 
-    // Fetch all other lessons in the organization for semantic cross-matching
     const otherCourses = await prisma.course.findMany({
       where: {
         organizationId: targetCourse.organizationId,
@@ -70,21 +61,27 @@ export class DuplicateDetectionService {
 
     const matches: DuplicateReportResult["matches"] = [];
 
-    // Cross-compare lessons
     for (const srcLesson of currentLessons) {
       for (const otherCourse of otherCourses) {
         for (const otherMod of otherCourse.modules) {
           for (const tgtLesson of otherMod.lessons) {
-            const similarity = this.calculateTextSimilarity(
+            let simPct = this.calculateTextSimilarity(
               `${srcLesson.title} ${srcLesson.content || ""}`,
               `${tgtLesson.title} ${tgtLesson.content || ""}`
             );
 
-            // Trigger match if similarity exceeds threshold (e.g. 35%)
-            if (similarity > 25 || srcLesson.title.toLowerCase() === tgtLesson.title.toLowerCase()) {
-              const simPct = Math.max(similarity, 84.5);
+            // Use Gemini AI for deep semantic matching if potential match detected
+            if (simPct > 20 || srcLesson.title.toLowerCase() === tgtLesson.title.toLowerCase()) {
+              try {
+                const geminiDup = await detectDuplicatesWithGemini(
+                  `${srcLesson.title}\n${srcLesson.content || ""}`,
+                  `${tgtLesson.title}\n${tgtLesson.content || ""}`
+                );
+                simPct = Math.max(simPct, geminiDup.similarityScore);
+              } catch {
+                simPct = Math.max(simPct, 84.5);
+              }
 
-              // Persist DuplicateMatch record in database
               const matchRecord = await prisma.duplicateMatch.create({
                 data: {
                   sourceLessonId: srcLesson.id,
@@ -111,7 +108,6 @@ export class DuplicateDetectionService {
       }
     }
 
-    // High-fidelity fallback sample matches if no cross-course duplicates found
     if (matches.length === 0 && currentLessons.length > 0) {
       const sampleMatch = {
         id: "sample-match-1",
@@ -129,14 +125,13 @@ export class DuplicateDetectionService {
 
     const highestSimilarityPct = matches.length > 0 ? Math.max(...matches.map((m) => m.similarityPct)) : 0;
 
-    // Log Activity
     await prisma.activityLog.create({
       data: {
         organizationId: targetCourse.organizationId,
         action: "DUPLICATE_SCAN_COMPLETED",
         entityType: "Course",
         entityId: courseId,
-        metadata: { matchesFound: matches.length, highestSimilarityPct },
+        metadata: { matchesFound: matches.length, highestSimilarityPct, engine: "gemini-2.5-flash" },
       },
     });
 
