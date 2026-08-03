@@ -19,17 +19,17 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   const [query, setQuery] = useState("");
   const [entityFilter, setEntityFilter] = useState("ALL");
   const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
-  const [recentSearches, setRecentSearches] = useState<string[]>([]);
-
-  // Load Recent Searches from localStorage
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("eduflow_recent_searches");
-      if (saved) {
-        setRecentSearches(JSON.parse(saved));
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("eduflow_recent_searches");
+        return saved ? JSON.parse(saved) : [];
+      } catch {
+        return [];
       }
-    } catch {}
-  }, []);
+    }
+    return [];
+  });
 
   // Keyboard shortcut listener (Cmd+K / Ctrl+K)
   useEffect(() => {
@@ -45,12 +45,12 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
 
   // Live Autocomplete Debounced Search
   useEffect(() => {
-    if (!query.trim()) {
-      setSearchResults([]);
-      return;
-    }
-
     const timer = setTimeout(() => {
+      if (!query.trim()) {
+        setSearchResults([]);
+        return;
+      }
+
       startTransition(async () => {
         const res = await globalSearchAction(query, entityFilter);
         if (res.success && res.data) {

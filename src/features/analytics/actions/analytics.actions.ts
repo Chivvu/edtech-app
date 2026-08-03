@@ -21,6 +21,6 @@ export async function generateExecutiveReportAction(timeRange: string = "30D") {
   }
 
   const stats = await AnalyticsService.getExecutiveAnalytics(timeRange, undefined, session.user.organizationId);
-  const report = await generateExecutiveReportWithGemini(timeRange, stats);
+  const report = await generateExecutiveReportWithGemini(timeRange, stats as unknown as Record<string, unknown>);
   return { success: true, data: report };
 }

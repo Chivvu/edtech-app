@@ -3,6 +3,17 @@ import { prisma } from "@/lib/prisma";
 import { AIAuditResultSchema, AIAuditResult } from "../validations/audit.schema";
 import { generateCourseAuditWithGemini } from "@/lib/ai/gemini";
 
+interface AuditCourseModule {
+  title: string;
+  lessons?: Array<{ title: string }>;
+}
+
+interface AuditCourseTarget {
+  title: string;
+  description?: string | null;
+  modules?: AuditCourseModule[];
+}
+
 export class AIReviewService {
   private static async executeWithRetry<T>(fn: () => Promise<T>, retries = 3, delay = 1000): Promise<T> {
     try {
@@ -15,7 +26,7 @@ export class AIReviewService {
   }
 
   static async auditCourseContent(courseId: string, model: "gpt-4o" | "gemini-2.0-flash" = "gemini-2.0-flash"): Promise<AIAuditResult> {
-    let course: any = null;
+    let course: AuditCourseTarget | null = null;
 
     try {
       course = await prisma.course.findUnique({
@@ -39,7 +50,7 @@ export class AIReviewService {
       const geminiRes = await generateCourseAuditWithGemini({
         title: courseTitle,
         description: courseDesc,
-        modules: course?.modules?.map((m: any) => ({ title: m.title, lessonsCount: m.lessons?.length || 0 })) || [],
+        modules: course?.modules?.map((m: AuditCourseModule) => ({ title: m.title, lessonsCount: m.lessons?.length || 0 })) || [],
       });
 
       auditResult = {

@@ -4,7 +4,7 @@ import React, { useState, useRef } from "react";
 import { getUploadSignatureAction, saveAttachmentAction } from "../actions/upload.actions";
 import { AllowedMimeTypes, MaxFileSizes } from "../validations/upload.schema";
 import { Button } from "@/components/ui/button";
-import { Upload, FileText, Image as ImageIcon, Video, Trash2, RefreshCw, Sparkles, CheckCircle, AlertCircle, FileArchive, Zap } from "lucide-react";
+import { Upload, FileText, Image as ImageIcon, Video, Trash2, RefreshCw, Sparkles, CheckCircle, FileArchive, Zap } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { Modal } from "@/components/ui/modal";
 
@@ -29,6 +29,12 @@ export function SecureFileUploader({
   acceptTypes = "all",
   onUploadSuccess,
 }: SecureFileUploaderProps) {
+  const getAcceptedMimes = () => {
+    if (acceptTypes === "images") return "image/*";
+    if (acceptTypes === "videos") return "video/*";
+    if (acceptTypes === "documents") return ".pdf,.doc,.docx,.txt";
+    return "*/*";
+  };
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -244,6 +250,7 @@ export function SecureFileUploader({
           <input
             ref={fileInputRef}
             type="file"
+            accept={getAcceptedMimes()}
             onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
             className="hidden"
           />

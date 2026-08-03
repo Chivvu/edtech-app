@@ -5,19 +5,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles,
   Zap,
-  Layers,
   AlertTriangle,
   TrendingUp,
   CheckCircle2,
-  Cpu,
   Bot,
-  ArrowRight,
   ShieldCheck,
   RefreshCw,
   GitMerge,
   Award,
   Activity,
-  FileSearch,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
@@ -132,7 +128,7 @@ export function LivingAIWorkspace() {
               <Zap className="h-4 w-4" />
             </div>
             <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-              Today's Live AI Insights
+              Today&apos;s Live AI Insights
               <span className="rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[10px] font-mono text-emerald-400 flex items-center gap-1">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" /> Live Telemetry
               </span>
@@ -250,7 +246,7 @@ export function LivingAIWorkspace() {
             <div className="mt-3 space-y-1">
               <h4 className="text-xs font-bold text-foreground">Catalog Quality Improved</h4>
               <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Bloom's Taxonomy coverage increased from 82% to 89.4% across active modules.
+                Bloom&apos;s Taxonomy coverage increased from 82% to 89.4% across active modules.
               </p>
             </div>
             <div className="mt-4 pt-3 border-t border-border/50 flex items-center justify-between text-[11px] text-emerald-400 font-semibold">

@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { Prisma, CourseStatus } from "@prisma/client";
-import { CourseFormInput, UpdateCourseInput, CourseFilterInput, BulkCourseActionInput } from "../validations/course.schema";
+import { Prisma } from "@prisma/client";
+import { CourseFormInput, CourseFilterInput, BulkCourseActionInput } from "../validations/course.schema";
 
-const fallbackCourses: any[] = [
+const fallbackCourses: Array<Record<string, unknown>> = [
   {
     id: "c-101",
     title: "Advanced React 19 & Next.js 16 Enterprise Architecture",
@@ -231,7 +231,7 @@ export class CourseService {
   static async updateCourse(id: string, input: Partial<CourseFormInput>, userId: string, organizationId: string) {
     try {
       return await prisma.course.update({
-        where: { id },
+        where: { id, organizationId },
         data: {
           ...(input.title && { title: input.title }),
           ...(input.description !== undefined && { description: input.description }),
@@ -266,10 +266,10 @@ export class CourseService {
   }
 
   static async bulkExecuteCourseActions(input: BulkCourseActionInput, userId: string, organizationId: string) {
-    return { affectedCount: input.courseIds.length, action: input.action };
+    return { affectedCount: input.courseIds.length, action: input.action, executorId: userId, orgId: organizationId };
   }
 
   static async createVersionSnapshot(courseId: string, createdById: string, changelog?: string) {
-    return { id: `v-${Date.now()}`, versionNumber: 2 };
+    return { id: `v-${Date.now()}`, courseId, createdById, changelog: changelog || "Manual snapshot", versionNumber: 2 };
   }
 }

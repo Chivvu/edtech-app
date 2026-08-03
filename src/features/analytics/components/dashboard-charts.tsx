@@ -13,7 +13,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { BarChart3, TrendingUp, Clock, CheckCircle2 } from "lucide-react";
+import { BarChart3, TrendingUp, Clock } from "lucide-react";
 
 interface DashboardChartsProps {
   monthlyUploads: { month: string; uploads: number }[];

@@ -78,8 +78,9 @@ export async function reviewLessonWithGeminiAction(lessonId: string, title: stri
 
     revalidatePath(`/lessons/${lessonId}`);
     return { success: true, data: reviewResult };
-  } catch (error: any) {
-    return { success: false, error: error?.message || "Failed to process Gemini lesson review." };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed operation.";
+    return { success: false, error: message };
   }
 }
 
@@ -117,8 +118,9 @@ export async function generateQuizForLessonAction(lessonId: string, topic: strin
 
     revalidatePath(`/lessons/${lessonId}`);
     return { success: true, data: { quiz: savedQuiz, questions } };
-  } catch (error: any) {
-    return { success: false, error: error?.message || "Failed to generate quiz with Gemini." };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed operation.";
+    return { success: false, error: message };
   }
 }
 
@@ -147,8 +149,9 @@ export async function generateAssignmentForLessonAction(lessonId: string, topic:
 
     revalidatePath(`/lessons/${lessonId}`);
     return { success: true, data: { assignment: savedAssignment, details: assignmentData } };
-  } catch (error: any) {
-    return { success: false, error: error?.message || "Failed to generate assignment with Gemini." };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed operation.";
+    return { success: false, error: message };
   }
 }
 

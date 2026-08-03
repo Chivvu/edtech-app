@@ -20,7 +20,7 @@ export default async function CourseReviewPage({ params }: CourseReviewPageProps
     notFound();
   }
 
-  const course = await CourseService.getCourseById(id, session.user.organizationId);
+  const course: any = await CourseService.getCourseById(id, session.user.organizationId);
 
   if (!course) {
     notFound();

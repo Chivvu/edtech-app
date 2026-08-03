@@ -3,7 +3,7 @@
 import React from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/table";
-import { Clock, ShieldCheck, MessageSquare, User, CheckCircle2 } from "lucide-react";
+import { Clock, ShieldCheck, MessageSquare } from "lucide-react";
 
 export interface ReviewTimelineItem {
   id: string;
@@ -61,7 +61,7 @@ export function WorkflowTimeline({ reviews }: WorkflowTimelineProps) {
 
                   {rev.feedback && (
                     <p className="text-xs text-foreground bg-background p-3 rounded-lg border border-border/60 font-medium">
-                      "{rev.feedback}"
+                      &quot;{rev.feedback}&quot;
                     </p>
                   )}
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useTransition } from "react";
+import React, { useState, useEffect, useCallback, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   getUserNotificationsAction,
@@ -8,7 +8,7 @@ import {
   markAllAsReadAction,
 } from "../actions/notification.actions";
 import { NotificationType } from "@prisma/client";
-import { Bell, Sparkles, ShieldCheck, MessageSquare, CheckCircle, CheckCheck, AlertCircle } from "lucide-react";
+import { Bell, Sparkles, ShieldCheck, MessageSquare, CheckCheck, AlertCircle } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 
 export interface NotificationItem {
@@ -24,29 +24,27 @@ export interface NotificationItem {
 export function NotificationCenter() {
   const router = useRouter();
   const { toast } = useToast();
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [unreadOnly, setUnreadOnly] = useState(false);
 
-  const fetchNotifications = () => {
+  const fetchNotifications = useCallback(() => {
     startTransition(async () => {
-      const res = await getUserNotificationsAction(unreadOnly);
+      const res = await getUserNotificationsAction(false);
       if (res.success && res.data) {
         setUnreadCount(res.data.unreadCount);
         setNotifications(res.data.notifications);
       }
     });
-  };
+  }, []);
 
   useEffect(() => {
     fetchNotifications();
-    // Realtime polling every 15 seconds
     const interval = setInterval(fetchNotifications, 15000);
     return () => clearInterval(interval);
-  }, [unreadOnly]);
+  }, [fetchNotifications]);
 
   const handleMarkAsRead = async (id: string, linkUrl?: string | null) => {
     await markAsReadAction(id);

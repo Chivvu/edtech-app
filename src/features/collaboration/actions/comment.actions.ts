@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
-import { CreateCommentSchema, CreateCommentInput, ToggleResolveSchema, ToggleResolveInput } from "../validations/comment.schema";
+import { CreateCommentSchema, CreateCommentInput } from "../validations/comment.schema";
 import { CommentService } from "../services/comment.service";
 
 export async function getCommentsAction(reviewId: string) {

@@ -25,10 +25,20 @@ export const getGenAIInstance = () => {
   return new GoogleGenerativeAI(apiKey);
 };
 
+interface RAGCourse {
+  id: string;
+  title: string;
+  status: string;
+  difficulty: string | null;
+  overallScore: number | null;
+  author?: { name: string } | null;
+  _count?: { modules: number } | null;
+}
+
 // Grounded RAG Context Builder
 export async function buildGroundedRAGContext(contextPath = "/dashboard"): Promise<string> {
   try {
-    let courses: any[] = [];
+    let courses: RAGCourse[] = [];
     try {
       courses = await prisma.course.findMany({
         take: 5,
@@ -46,6 +56,7 @@ export async function buildGroundedRAGContext(contextPath = "/dashboard"): Promi
     } catch {
       courses = [
         {
+          id: "c-101",
           title: "Advanced React 19 & Next.js 16 Enterprise Architecture",
           status: "PUBLISHED",
           difficulty: "ADVANCED",
@@ -54,6 +65,7 @@ export async function buildGroundedRAGContext(contextPath = "/dashboard"): Promi
           _count: { modules: 6 },
         },
         {
+          id: "c-102",
           title: "System Design Essentials & Distributed AI Infrastructure",
           status: "REVIEW_PENDING",
           difficulty: "INTERMEDIATE",
@@ -105,8 +117,9 @@ export async function generateGeminiContent(prompt: string, contextPath?: string
       });
       if (response.text) return response.text;
     }
-  } catch (genaiErr: any) {
-    console.warn("@google/genai SDK model call failed, falling back to @google/generative-ai:", genaiErr?.message || genaiErr);
+  } catch (genaiErr: unknown) {
+    const msg = genaiErr instanceof Error ? genaiErr.message : String(genaiErr);
+    console.warn("@google/genai SDK model call failed, falling back to @google/generative-ai:", msg);
   }
 
   // Fallback to @google/generative-ai SDK with model loop
@@ -119,8 +132,9 @@ export async function generateGeminiContent(prompt: string, contextPath?: string
         const result = await model.generateContent(fullPrompt);
         const responseText = result.response.text();
         if (responseText) return responseText;
-      } catch (err: any) {
-        console.warn(`Gemini model ${modelName} failed:`, err?.message || err);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.warn(`Gemini model ${modelName} failed:`, msg);
       }
     }
   }
@@ -179,8 +193,9 @@ export async function streamGeminiContent(
             }
           },
         });
-      } catch (err) {
-        console.warn(`Streaming failed on model ${modelName}, trying next...`);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.warn(`Streaming failed on model ${modelName}, trying next...`, msg);
       }
     }
   }
@@ -542,7 +557,10 @@ JSON Schema:
 // ----------------------------------------------------
 // 6. CURRICULUM ANALYZER & DEPENDENCY GRAPH
 // ----------------------------------------------------
-export async function analyzeCurriculumWithGemini(courseTitle: string, modules: any[]): Promise<GeminiCurriculumAnalysis> {
+export async function analyzeCurriculumWithGemini(
+  courseTitle: string,
+  modules: Array<{ title: string; lessons?: string[] }>
+): Promise<GeminiCurriculumAnalysis> {
   const fallback: GeminiCurriculumAnalysis = {
     curriculumHealthScore: 92.5,
     learningFlowScore: 94.0,
@@ -599,7 +617,10 @@ Return valid JSON matching schema:
 // ----------------------------------------------------
 // 7. EXECUTIVE REPORTS & ANALYTICS INTELLIGENCE
 // ----------------------------------------------------
-export async function generateExecutiveReportWithGemini(timeRange: string, stats: any): Promise<GeminiExecutiveReport> {
+export async function generateExecutiveReportWithGemini(
+  timeRange: string,
+  stats: Record<string, unknown>
+): Promise<GeminiExecutiveReport> {
   const fallback: GeminiExecutiveReport = {
     executiveSummary: `Executive Analytics Report for ${timeRange}: Platform catalog health is operating at an exceptional 96.8/100 quality index. Course velocity increased by 24% with high first-pass audit approvals.`,
     uploadVelocityAnalysis: "Upload volume accelerated smoothly across engineering and design departments.",

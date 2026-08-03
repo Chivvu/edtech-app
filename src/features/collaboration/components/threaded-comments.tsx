@@ -5,7 +5,7 @@ import { createCommentAction, toggleResolveAction } from "../actions/comment.act
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { MessageSquare, CheckCircle, Reply, AtSign, Smile, Send, CheckCircle2 } from "lucide-react";
+import { MessageSquare, Reply, Send, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 
 export interface CommentItemData {

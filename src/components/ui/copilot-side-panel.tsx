@@ -4,13 +4,11 @@ import React, { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Sparkles,
   X,
   Send,
   Bot,
   User,
   RefreshCw,
-  Zap,
   Brain,
   Layers,
   FileSearch,
@@ -169,10 +167,10 @@ Referencing active page context (**${pathname}**):
 
     const userText = targetPrompt.trim();
     const userMsg: ChatMessage = {
-      id: `u-${Date.now()}`,
+      id: `u-${messages.length + 1}`,
       sender: "user",
       text: userText,
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      timestamp: "Just now",
       contextPage: includeContext ? pathname : undefined,
     };
 
@@ -188,7 +186,7 @@ Referencing active page context (**${pathname}**):
       await new Promise((res) => setTimeout(res, 350));
     }
 
-    const botMsgId = `copilot-${Date.now()}`;
+    const botMsgId = `copilot-${messages.length + 2}`;
     const botMsg: ChatMessage = {
       id: botMsgId,
       sender: "copilot",

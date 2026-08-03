@@ -21,6 +21,7 @@ export class CommentService {
 
   static async createComment(input: CreateCommentInput, userId: string, organizationId: string) {
     const { reviewId, comment, parentId, lessonId, lineNumber, mentions } = input;
+    if (!organizationId) throw new Error("Organization ID required.");
 
     return prisma.$transaction(async (tx) => {
       const newComment = await tx.comment.create({

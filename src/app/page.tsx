@@ -2,26 +2,21 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Sparkles,
   ArrowRight,
   ShieldCheck,
-  Zap,
   Layers,
   Cpu,
   BarChart3,
-  Search,
   CheckCircle2,
   GitBranch,
   Bot,
   Globe,
-  Lock,
   Play,
   X,
   ChevronRight,
-  Copy,
-  Check,
 } from "lucide-react";
 
 // --- Custom Social SVG Icons ---
@@ -227,7 +222,17 @@ export default function EnterpriseLandingPage() {
   const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 });
   const [demoModalOpen, setDemoModalOpen] = useState(false);
   const [activeCopilotPrompt, setActiveCopilotPrompt] = useState(0);
-  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({
+        x: e.clientX / window.innerWidth,
+        y: e.clientY / window.innerHeight,
+      });
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
 
   const copilotPrompts = [
     {
@@ -254,12 +259,6 @@ export default function EnterpriseLandingPage() {
     window.addEventListener("mousemove", handleMouseMove);
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
-
-  const handleCopyInstall = () => {
-    navigator.clipboard.writeText("git clone https://github.com/Chivvu/edtech-app.git");
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   return (
     <div className="relative min-h-screen bg-[#07090D] text-foreground font-sans overflow-x-hidden selection:bg-purple-500/30 selection:text-cyan-300">
@@ -544,7 +543,7 @@ export default function EnterpriseLandingPage() {
               Your Personal AI Curriculum Copilot
             </h3>
             <p className="text-neutral-400 text-sm leading-relaxed">
-              Ask Gemini 2.0 Flash or OpenAI GPT-4o to analyze course structure, resolve duplicate lessons, or generate Bloom's Taxonomy assessments in seconds.
+              Ask Gemini 2.0 Flash or OpenAI GPT-4o to analyze course structure, resolve duplicate lessons, or generate Bloom&apos;s Taxonomy assessments in seconds.
             </p>
 
             <div className="space-y-2 pt-2">
@@ -558,7 +557,7 @@ export default function EnterpriseLandingPage() {
                       : "border-white/10 bg-white/5 text-neutral-400 hover:bg-white/10 hover:text-white"
                   }`}
                 >
-                  💬 "{cp.prompt}"
+                  💬 &quot;{cp.prompt}&quot;
                 </button>
               ))}
             </div>
@@ -585,7 +584,7 @@ export default function EnterpriseLandingPage() {
               <div className="p-5 space-y-4 min-h-[300px] text-neutral-300 leading-relaxed font-sans">
                 <div className="flex items-center gap-2 text-cyan-400 font-mono text-[11px]">
                   <span>&gt; Prompt:</span>
-                  <span className="text-white font-semibold">"{copilotPrompts[activeCopilotPrompt].prompt}"</span>
+                  <span className="text-white font-semibold">&quot;{copilotPrompts[activeCopilotPrompt].prompt}&quot;</span>
                 </div>
                 <div className="p-4 rounded-xl border border-purple-500/30 bg-purple-500/10 whitespace-pre-wrap">
                   {copilotPrompts[activeCopilotPrompt].response}
@@ -610,7 +609,7 @@ export default function EnterpriseLandingPage() {
             <div className="rounded-2xl border border-white/10 bg-card/60 p-6 backdrop-blur-xl space-y-3">
               <span className="text-xs text-neutral-400 font-semibold uppercase tracking-wider">Catalog Health Index</span>
               <div className="text-4xl font-extrabold text-emerald-400">96.8 / 100</div>
-              <p className="text-xs text-neutral-400">Calculated across Bloom's coverage, clarity, and WCAG accessibility metrics.</p>
+              <p className="text-xs text-neutral-400">Calculated across Bloom&apos;s coverage, clarity, and WCAG accessibility metrics.</p>
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-card/60 p-6 backdrop-blur-xl space-y-3">

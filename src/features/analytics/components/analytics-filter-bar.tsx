@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Printer, Calendar, Filter } from "lucide-react";
+import { Download, Printer, Calendar } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 
 interface AnalyticsFilterBarProps {

@@ -24,9 +24,11 @@ const WorkflowStages: { status: CourseStatus; label: string; icon: React.ReactNo
   { status: CourseStatus.PUBLISHED, label: "Published", icon: <Globe className="h-4 w-4" /> },
 ];
 
-export function WorkflowStepper({ courseId, currentStatus, userRole }: WorkflowStepperProps) {
+export function WorkflowStepper({ courseId, currentStatus, userRole = "ADMIN" }: WorkflowStepperProps) {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
+
+  const isRoleAuthorized = userRole !== "VIEWER";
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [targetStatus, setTargetStatus] = useState<CourseStatus | null>(null);
@@ -35,6 +37,10 @@ export function WorkflowStepper({ courseId, currentStatus, userRole }: WorkflowS
   const currentStageIndex = WorkflowStages.findIndex((s) => s.status === currentStatus);
 
   const openTransitionModal = (status: CourseStatus) => {
+    if (!isRoleAuthorized) {
+      toast({ type: "error", title: "Access Restricted", description: "Viewer role cannot transition workflow status." });
+      return;
+    }
     setTargetStatus(status);
     setIsModalOpen(true);
   };

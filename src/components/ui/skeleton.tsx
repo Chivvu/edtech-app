@@ -36,13 +36,16 @@ export function SkeletonChart() {
     <div className="space-y-4 rounded-xl border border-border bg-card p-6">
       <Skeleton className="h-5 w-1/4" />
       <div className="flex h-48 items-end gap-2 pt-4">
-        {Array.from({ length: 7 }).map((_, i) => (
-          <Skeleton
-            key={i}
-            className="w-full"
-            style={{ height: `${Math.floor(Math.random() * 60) + 30}%` }}
-          />
-        ))}
+        {Array.from({ length: 7 }).map((_, i) => {
+          const heights = [45, 65, 35, 75, 50, 60, 40];
+          return (
+            <Skeleton
+              key={i}
+              className="w-full"
+              style={{ height: `${heights[i % 7]}%` }}
+            />
+          );
+        })}
       </div>
     </div>
   );

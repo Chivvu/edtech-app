@@ -64,8 +64,8 @@ export class CloudinaryService {
     }
 
     // Delete record from Database
-    await prisma.attachment.delete({
-      where: { id: attachmentId },
+    await prisma.attachment.deleteMany({
+      where: { id: attachmentId, uploadedById: userId },
     });
 
     return { success: true };

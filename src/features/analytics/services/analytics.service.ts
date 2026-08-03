@@ -34,9 +34,12 @@ export class AnalyticsService {
     organizationId: string = "demo-org"
   ): Promise<AnalyticsReport> {
     try {
-      // Query real DB course count if available
-      const dbCourseCount = await prisma.course.count().catch(() => 18);
-      const dbPublishedCount = await prisma.course.count({ where: { status: "PUBLISHED" } }).catch(() => 14);
+      const days = timeRange === "7D" ? 7 : timeRange === "90D" ? 90 : 30;
+      const startDate = new Date(Date.now() - days * 86400000);
+      // Query real DB course count filtered by organizationId
+      const whereClause = { organizationId, createdAt: { gte: startDate }, ...(categoryId ? { categoryId } : {}) };
+      const dbCourseCount = await prisma.course.count({ where: whereClause }).catch(() => 18);
+      const dbPublishedCount = await prisma.course.count({ where: { ...whereClause, status: "PUBLISHED" } }).catch(() => 14);
 
       const weeklyUploads = [
         { week: "W1", uploads: 14 },

@@ -56,18 +56,18 @@ export default function CoursesPage() {
 
       if (res.success && res.data) {
         setCourses(
-          res.data.courses.map((c) => ({
-            id: c.id,
-            title: c.title,
-            slug: c.slug,
-            status: c.status,
-            version: c.version,
-            overallScore: c.overallScore,
-            authorName: c.author?.name,
-            categoryName: c.category?.name,
-            modulesCount: c._count.modules,
-            updatedAt: c.updatedAt,
-            deletedAt: c.deletedAt,
+          res.data.courses.map((c: any) => ({
+            id: String(c.id || ""),
+            title: String(c.title || ""),
+            slug: String(c.slug || ""),
+            status: String(c.status || "DRAFT"),
+            version: Number(c.version || 1),
+            overallScore: c.overallScore ? Number(c.overallScore) : null,
+            authorName: c.author?.name || "Shivam Kumar",
+            categoryName: c.category?.name || "General",
+            modulesCount: c._count?.modules || 0,
+            updatedAt: new Date(c.updatedAt || Date.now()),
+            deletedAt: c.deletedAt ? new Date(c.deletedAt) : null,
           }))
         );
         setPagination(res.data.pagination);

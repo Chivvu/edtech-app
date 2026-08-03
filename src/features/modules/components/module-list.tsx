@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { StatusBadge } from "@/components/ui/table";
-import { GripVertical, Plus, Clock, FileText, Trash2, Edit3, ChevronRight, Layers } from "lucide-react";
+import { CourseStatus } from "@prisma/client";
+import { GripVertical, Plus, Clock, FileText, Trash2, Layers } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 
 export interface ModuleItemData {
@@ -89,7 +90,7 @@ export function ModuleList({ courseId, initialModules }: ModuleListProps) {
         title: newTitle,
         description: newDescription,
         durationMinutes: Number(newDuration),
-        status: "DRAFT" as any,
+        status: CourseStatus.DRAFT,
         objectives: [],
       });
 

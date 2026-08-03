@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, StatusBadge } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Edit3, Sparkles, CheckCircle, Trash2, RefreshCw, Layers } from "lucide-react";
+import { Edit3, Sparkles, Trash2, RefreshCw, Layers } from "lucide-react";
 
 export interface CourseTableItem {
   id: string;

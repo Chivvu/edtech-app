@@ -29,8 +29,9 @@ export async function POST(req: Request) {
       groundedRAG: true,
       timestamp: new Date().toISOString(),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Gemini Chat Route Error:", error);
-    return NextResponse.json({ error: error.message || "Failed to process Gemini AI request" }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Failed to process Gemini AI request";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

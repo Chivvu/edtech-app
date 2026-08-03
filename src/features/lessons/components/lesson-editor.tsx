@@ -20,11 +20,9 @@ import {
   Eye,
   Edit3,
   Save,
-  CheckCircle,
   Clock,
   Plus,
   Paperclip,
-  Sparkles,
   RefreshCw,
   ExternalLink,
   HelpCircle,
@@ -108,8 +106,8 @@ export function LessonEditor({
   );
 
   useEffect(() => {
-    setAutosaveStatus("UNSAVED");
     const timer = setTimeout(() => {
+      setAutosaveStatus("UNSAVED");
       handleSave(false);
     }, 2500);
 

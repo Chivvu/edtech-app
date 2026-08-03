@@ -2,9 +2,12 @@ import { prisma } from "@/lib/prisma";
 import { openai, AI_MODELS } from "@/lib/openai";
 
 export class DuplicateService {
-  static async findDuplicatesForLesson(lessonId: string, _organizationId: string) {
+  static async findDuplicatesForLesson(lessonId: string, organizationId: string) {
     return prisma.duplicateMatch.findMany({
-      where: { sourceLessonId: lessonId },
+      where: {
+        sourceLessonId: lessonId,
+        targetLesson: { module: { course: { organizationId } } },
+      },
       include: {
         targetLesson: {
           include: {

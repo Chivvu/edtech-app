@@ -5,11 +5,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { LoginInput, LoginSchema } from "../validations/auth.schema";
 import { SocialAuthButtons } from "./social-auth-buttons";
 import { KeyRound, ShieldAlert, Loader2, Mail, Lock } from "lucide-react";
 
 export function LoginForm() {
+  const router = useRouter();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [requiresTwoFactor, setRequiresTwoFactor] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,23 +33,39 @@ export function LoginForm() {
     setIsSubmitting(true);
     setErrorMessage(null);
 
-    // Set demo session cookie to ensure middleware access
-    document.cookie = "eduflow_session=active; path=/; max-age=86400";
-
     try {
-      await signIn("credentials", {
+      const res = await signIn("credentials", {
         email: data.email,
         password: data.password,
         redirect: false,
         callbackUrl: "/dashboard",
       });
-    } catch {}
 
-    window.location.href = "/dashboard";
+      if (res?.error) {
+        if (res.error.includes("2FA")) {
+          setRequiresTwoFactor(true);
+        } else {
+          setErrorMessage("Invalid credentials provided.");
+          setIsSubmitting(false);
+          return;
+        }
+      }
+    } catch {
+      // Fallback
+    }
+
+    router.push("/dashboard");
   };
 
   return (
     <div className="space-y-6">
+      {requiresTwoFactor && (
+        <div className="flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3.5 text-sm text-amber-400">
+          <KeyRound className="h-5 w-5 shrink-0 text-amber-400" />
+          <span>Two-factor authentication code required. Please check your authenticator app.</span>
+        </div>
+      )}
+
       {errorMessage && (
         <div className="flex items-center gap-3 rounded-lg border border-red-500/30 bg-red-500/10 p-3.5 text-sm text-red-400">
           <ShieldAlert className="h-5 w-5 shrink-0 text-red-400" />

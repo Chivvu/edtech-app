@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Search, Filter, Trash2, ArrowUpDown } from "lucide-react";
+import { Search, Trash2, ArrowUpDown } from "lucide-react";
 import { CourseStatus } from "@prisma/client";
 import { DifficultyLevels, Languages } from "../validations/course.schema";
 

@@ -22,7 +22,7 @@ export default async function CourseDetailsPage({ params }: CourseDetailsPagePro
     notFound();
   }
 
-  const course = await CourseService.getCourseById(id, session.user.organizationId);
+  const course: any = await CourseService.getCourseById(id, session.user.organizationId);
 
   if (!course) {
     notFound();

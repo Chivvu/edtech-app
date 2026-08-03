@@ -30,7 +30,7 @@ Provide a comprehensive, structured JSON response matching this schema:
     const parsed = JSON.parse(cleanJson);
 
     return NextResponse.json({ success: true, data: parsed, engine: "gemini-2.5-flash" });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({
       success: true,
       data: {
